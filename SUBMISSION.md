@@ -10,7 +10,7 @@ Please find my Task 6_DATA submission below.
 1. Video demonstration: [VIDEO LINK]
 2. Library documentation: https://soliha10.github.io/fake-users
 3. Deployed application: https://fake-users-tvxj.onrender.com
-4. Benchmark: About 4,545 users/second without Markov bios and 1,877 with them, measured on the deployed database. Full results: https://soliha10.github.io/fake-users/benchmark
+4. Benchmark: About 4,323 users/second without Markov bios and 1,834 with them, measured on the deployed database. Full results: https://soliha10.github.io/fake-users/benchmark
 5. Full name: [YOUR FULL NAME]
 
 The optional Markov chain text generation is implemented.

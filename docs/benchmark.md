@@ -14,18 +14,20 @@ Reproduce with `python scripts/benchmark.py --label <name> --host "<description>
 
 | Locale | Users | Markov bio | Median users/sec |
 |---|---:|---|---:|
-| de_DE | 1,000 | no | 4,524 |
-| de_DE | 10,000 | no | 4,450 |
-| de_DE | 100,000 | no | 4,558 |
-| de_DE | 1,000 | yes | 1,845 |
-| de_DE | 10,000 | yes | 1,863 |
-| en_US | 1,000 | no | 4,342 |
-| en_US | 10,000 | no | 4,500 |
-| en_US | 100,000 | no | 4,531 |
-| en_US | 1,000 | yes | 1,963 |
-| en_US | 10,000 | yes | 1,891 |
+| de_DE | 1,000 | no | 4,070 |
+| de_DE | 10,000 | no | 4,335 |
+| de_DE | 100,000 | no | 4,346 |
+| de_DE | 1,000 | yes | 1,674 |
+| de_DE | 10,000 | yes | 1,725 |
+| en_US | 1,000 | no | 4,022 |
+| en_US | 10,000 | no | 4,266 |
+| en_US | 100,000 | no | 4,301 |
+| en_US | 1,000 | yes | 1,945 |
+| en_US | 10,000 | yes | 1,943 |
 
 ## Local
+
+Measured before the routine refactor in migration 008, while other work ran on the same machine.
 
 - Host: Apple M3, PostgreSQL in Docker
 - PostgreSQL: 16.15
