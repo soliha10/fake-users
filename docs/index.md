@@ -339,6 +339,9 @@ The reasons behind the less obvious choices in the code:
   PL/pgSQL's cached plans on the hottest path.
 - **Page restored from the back/forward cache.** The script reloads it, so a control does not stay in
   its loading state.
+- **Batches load without a page reload.** The script fetches the same URL the link points to, swaps the
+  results section, and updates the address bar, so links stay shareable and the app still works without
+  JavaScript.
 - **Migration 008.** Migrations run once, so refactored routines ship as `CREATE OR REPLACE` in a new
   file. A fresh database and an upgraded one end up with the same routines.
 
