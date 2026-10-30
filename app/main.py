@@ -21,7 +21,8 @@ pool = ConnectionPool(
     max_size=int(os.environ.get("DB_POOL_MAX", 5)),
     timeout=15,
     check=ConnectionPool.check_connection,
-    kwargs={"row_factory": dict_row},
+    # Neon's pooled endpoint runs PgBouncer, which cannot track server-side prepared statements.
+    kwargs={"row_factory": dict_row, "prepare_threshold": None},
     open=False,
 )
 
