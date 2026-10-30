@@ -1,20 +1,16 @@
-import os
-
 import psycopg
 import pytest
-from dotenv import load_dotenv
 from psycopg.rows import dict_row
 
-load_dotenv()
-DSN = os.environ["DATABASE_URL"]
+from scripts.database import database_url
 
 
 @pytest.fixture(scope="session")
 def dsn():
-    return DSN
+    return database_url()
 
 
 @pytest.fixture()
-def db():
-    with psycopg.connect(DSN, autocommit=True, row_factory=dict_row) as conn:
-        yield conn
+def db(dsn):
+    with psycopg.connect(dsn, autocommit=True, row_factory=dict_row) as connection:
+        yield connection

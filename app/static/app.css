@@ -1,7 +1,7 @@
 :root {
   color-scheme: light dark;
 
-  --primary: #6D28D9;
+  --primary: var(--bs-primary);
   --primary-hover: #5B21B6;
   --primary-active: #4C1D95;
   --on-primary: #FFFFFF;
@@ -12,7 +12,6 @@
   --border: #E7E5EC;
   --text: #1C1A25;
   --muted: #65606F;
-  --danger: #B42318;
   --shadow: 0 1px 2px rgba(28, 26, 37, .05);
 
   --radius-control: 8px;
@@ -23,7 +22,7 @@
   --bs-primary: #6D28D9;
   --bs-primary-rgb: 109, 40, 217;
   --bs-link-color: var(--primary);
-  --bs-link-color-rgb: 109, 40, 217;
+  --bs-link-color-rgb: var(--bs-primary-rgb);
   --bs-link-hover-color: var(--primary-hover);
   --bs-link-hover-color-rgb: 91, 33, 182;
   --bs-focus-ring-color: rgba(109, 40, 217, .25);
@@ -34,7 +33,6 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --primary: #A78BFA;
     --primary-hover: #BBA6FC;
     --primary-active: #C4B5FD;
     --on-primary: #1C1A25;
@@ -45,12 +43,10 @@
     --border: #2C2935;
     --text: #F2F0F6;
     --muted: #A8A3B3;
-    --danger: #FCA5A5;
     --shadow: none;
 
     --bs-primary: #A78BFA;
     --bs-primary-rgb: 167, 139, 250;
-    --bs-link-color-rgb: 167, 139, 250;
     --bs-link-hover-color-rgb: 187, 166, 252;
     --bs-focus-ring-color: rgba(167, 139, 250, .3);
   }
@@ -166,7 +162,6 @@ td.person { padding-left: 64px; padding-right: 48px; }
 .toast { position: fixed; left: 50%; bottom: 24px; z-index: 20; padding: 8px 16px; background: var(--text); color: var(--surface); border-radius: var(--radius-control); font-weight: 500; opacity: 0; transform: translateX(-50%); pointer-events: none; transition: opacity 120ms; }
 .toast.is-visible { opacity: 1; }
 
-/* Address stays at two lines on the desktop table; the full text is in the title. */
 @media (min-width: 992px) {
   .address-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .is-open .address-text { display: block; }
@@ -183,7 +178,6 @@ td.person { padding-left: 64px; padding-right: 48px; }
   .contact-line .mono { min-width: 0; }
 }
 
-/* Below 992px each user is a card. */
 @media (max-width: 991.98px) {
   .controls { grid-template-columns: 1fr 1fr; }
   .field-seed { grid-column: 2; }

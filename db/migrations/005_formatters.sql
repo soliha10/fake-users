@@ -1,8 +1,3 @@
--- Layer 4: formatted strings. Variation comes from format_templates rows, so a
--- locale changes formats through data alone.
-
--- Lower-case ASCII for e-mail addresses. German digraphs come first, then the
--- remaining accents; anything else non-alphanumeric is dropped.
 CREATE OR REPLACE FUNCTION fake_transliterate(p_text text)
 RETURNS text
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE AS $$
@@ -17,8 +12,6 @@ BEGIN
 END;
 $$;
 
--- Replaces each {key} with the paired value (NULL becomes empty), then tidies the
--- spacing left behind by empty tokens.
 CREATE OR REPLACE FUNCTION fake_render(p_template text, p_keys text[], p_values text[])
 RETURNS text
 LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE AS $$
@@ -32,8 +25,6 @@ BEGIN
 END;
 $$;
 
--- Fills a digit pattern: # is any digit, % is 2-9. One hash supplies 16 two-byte
--- slots; a longer pattern moves on to the next counter.
 CREATE OR REPLACE FUNCTION fake_digits(
     p_locale text, p_seed bigint, p_position bigint, p_field text, p_pattern text
 ) RETURNS text

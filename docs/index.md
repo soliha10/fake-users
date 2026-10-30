@@ -322,6 +322,27 @@ words, and counts how often each word follows each pair of words. Sentences begi
 number as the PRNG counter. Every prefix in the table has at least one successor, so a walk always
 reaches `$`. The word limit is only checked at a sentence end, so the text never stops mid-sentence.
 
+## Design notes
+
+The code carries no comments, so the reasons behind its less obvious choices live here.
+
+- **`1 - u` in `fake_normal`.** `u` can be 0 but never 1, so `1 - u` is in `(0, 1]` and `ln` stays finite.
+- **`prepare_threshold=None` in the app.** Neon's pooled endpoint runs PgBouncer, which cannot track
+  server-side prepared statements across pooled connections.
+- **One `places` row per city, region, and postal code.** Picking them together keeps an address
+  consistent, which three independent picks would not.
+- **Only `fake_benchmark` reads the clock.** Generation must not depend on time. The benchmark reads it
+  only to report speed, and a test confirms no other routine does.
+- **Lookups use `cum_weight` and `idx`.** Both are stored, so a pick never depends on row order or
+  collation. `cum_weight` holds the running share of weight in `idx` order, so a pick is one index
+  descent and the last row of a group is exactly 1.
+- **Separate pick routines per table.** A single dynamic routine would use `EXECUTE`, which gives up
+  PL/pgSQL's cached plans on the hottest path.
+- **Page restored from the back/forward cache.** The script reloads it, so a control does not stay in
+  its loading state.
+- **Migration 008.** Migrations run once, so refactored routines ship as `CREATE OR REPLACE` in a new
+  file. A fresh database and an upgraded one end up with the same routines.
+
 ## Database schema
 
 ```text

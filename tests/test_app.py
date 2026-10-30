@@ -5,13 +5,17 @@ import pytest
 
 from app.main import app, initials
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture()
 def client():
     app.config["TESTING"] = False
     return app.test_client()
+
+
+def page_html(client, url):
+    return client.get(url).get_data(as_text=True)
 
 
 def test_index_renders_ten_users_and_locales(client):
@@ -28,14 +32,14 @@ def test_same_url_returns_same_page(client):
 
 
 def test_next_link_advances_and_keeps_arguments(client):
-    html = client.get("/?locale=de_DE&seed=5&batch=2").get_data(as_text=True)
+    html = page_html(client, "/?locale=de_DE&seed=5&batch=2")
     assert re.search(r"locale=de_DE&amp;seed=5&amp;batch=3", html)
     assert re.search(r"locale=de_DE&amp;seed=5&amp;batch=1", html)
 
 
 def test_form_does_not_carry_batch(client):
-    html = client.get("/?batch=7").get_data(as_text=True)
-    form = html[html.index('<form'):html.index('</form>')]
+    html = page_html(client, "/?batch=7")
+    form = html[html.index("<form"):html.index("</form>")]
     assert 'name="batch"' not in form
 
 
@@ -53,26 +57,26 @@ def test_health(client):
 
 
 def test_primary_color_is_purple():
-    css = (ROOT / "app" / "static" / "app.css").read_text(encoding="utf-8")
-    assert "--bs-primary: #6D28D9;" in css
-    assert "--bs-primary-rgb: 109, 40, 217;" in css
+    stylesheet = (ROOT_DIR / "app" / "static" / "app.css").read_text(encoding="utf-8")
+    assert "--bs-primary: #6D28D9;" in stylesheet
+    assert "--bs-primary-rgb: 109, 40, 217;" in stylesheet
 
 
 def test_status_shows_one_based_users_and_batch(client):
-    html = client.get("/?locale=en_US&seed=1&batch=3").get_data(as_text=True)
+    html = page_html(client, "/?locale=en_US&seed=1&batch=3")
     assert "Showing users 31–40" in html
     assert "Batch 4" in html
 
 
 def test_previous_is_disabled_on_first_batch(client):
-    html = client.get("/?seed=1").get_data(as_text=True)
+    html = page_html(client, "/?seed=1")
     assert 'id="prev-batch"' not in html
     assert 'aria-disabled="true"' in html
 
 
-def test_bio_is_in_the_page_with_its_language(client):
-    assert 'class="bio" lang="de"' in client.get("/?locale=de_DE").get_data(as_text=True)
-    assert 'class="bio" lang="en"' in client.get("/?locale=en_US").get_data(as_text=True)
+@pytest.mark.parametrize("locale, language", [("de_DE", "de"), ("en_US", "en")])
+def test_bio_is_in_the_page_with_its_language(client, locale, language):
+    assert f'class="bio" lang="{language}"' in page_html(client, f"/?locale={locale}")
 
 
 @pytest.mark.parametrize("name, expected", [

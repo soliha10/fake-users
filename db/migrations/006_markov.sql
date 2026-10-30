@@ -1,6 +1,3 @@
--- Order-2 Markov text. Each step reads the row for the two previous words and
--- draws the next word by cumulative weight, using the step number as PRNG counter.
-
 CREATE OR REPLACE FUNCTION fake_markov_next(p_locale text, p_prefix text, p_u double precision)
 RETURNS text
 LANGUAGE plpgsql STABLE PARALLEL SAFE AS $$
@@ -36,7 +33,6 @@ BEGIN
             finished := finished + 1;
             prev1 := '^';
             prev2 := '^';
-            -- The word limit only stops at a sentence boundary, so text never ends mid-sentence.
             EXIT WHEN cardinality(words) >= p_max_words;
         ELSE
             words := words || word;

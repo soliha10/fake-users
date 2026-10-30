@@ -1,26 +1,27 @@
-"""Apply db/migrations/*.sql in order, each file once. Usage: python scripts/migrate.py"""
-import os
 import pathlib
 
 import psycopg
-from dotenv import load_dotenv
 
-MIGRATIONS = pathlib.Path(__file__).resolve().parent.parent / "db" / "migrations"
+from database import database_url
+
+MIGRATIONS_DIR = pathlib.Path(__file__).resolve().parent.parent / "db" / "migrations"
+
+
+def apply_migration(connection, migration_path) -> None:
+    print("apply", migration_path.name)
+    with connection.transaction():
+        connection.execute(migration_path.read_text(encoding="utf-8"))
+        connection.execute("INSERT INTO schema_migrations VALUES (%s)", (migration_path.name,))
 
 
 def migrate(conninfo: str) -> None:
-    with psycopg.connect(conninfo, autocommit=True) as conn:
-        conn.execute("CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY)")
-        done = {row[0] for row in conn.execute("SELECT name FROM schema_migrations")}
-        for path in sorted(MIGRATIONS.glob("*.sql")):
-            if path.name in done:
-                continue
-            print("apply", path.name)
-            with conn.transaction():
-                conn.execute(path.read_text(encoding="utf-8"))
-                conn.execute("INSERT INTO schema_migrations VALUES (%s)", (path.name,))
+    with psycopg.connect(conninfo, autocommit=True) as connection:
+        connection.execute("CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY)")
+        applied = {name for (name,) in connection.execute("SELECT name FROM schema_migrations")}
+        for migration_path in sorted(MIGRATIONS_DIR.glob("*.sql")):
+            if migration_path.name not in applied:
+                apply_migration(connection, migration_path)
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    migrate(os.environ["DATABASE_URL"])
+    migrate(database_url())

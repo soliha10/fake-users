@@ -1,10 +1,9 @@
 {% extends "base.html" %}
+{% import "macros.html" as ui %}
 {% block title %}{{ title }} · Fake User Generator{% endblock %}
 {% block content %}
 <section class="card error-card">
-  <span class="error-icon" aria-hidden="true">
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
-  </span>
+  <span class="error-icon">{{ ui.icon("alert", size=24) }}</span>
   <h1>{{ title }}</h1>
   <p>{{ message }}</p>
   <a class="btn btn-primary" href="{{ url_for('index') }}">Back to the generator</a>

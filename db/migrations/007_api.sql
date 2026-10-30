@@ -1,5 +1,3 @@
--- Layer 5: public API.
-
 CREATE OR REPLACE FUNCTION fake_locales()
 RETURNS TABLE (code text, name text, country text)
 LANGUAGE plpgsql STABLE PARALLEL SAFE AS $$
@@ -18,8 +16,6 @@ BEGIN
 END;
 $$;
 
--- One user at an absolute position. Names are picked once and shared, so the
--- e-mail always matches the displayed name.
 CREATE OR REPLACE FUNCTION fake_user(
     p_locale text, p_seed bigint, p_position bigint, p_with_bio boolean DEFAULT true
 ) RETURNS fake_user_row
@@ -57,7 +53,6 @@ BEGIN
 END;
 $$;
 
--- One batch. A user's position is batch_index * batch_size + index_in_batch.
 CREATE OR REPLACE FUNCTION fake_users(
     p_locale text, p_seed bigint, p_batch_index bigint,
     p_batch_size integer DEFAULT 10, p_with_bio boolean DEFAULT true
@@ -83,8 +78,6 @@ BEGIN
 END;
 $$;
 
--- Measures generation speed. Only this routine reads the clock, and it never
--- feeds the clock into generated data.
 CREATE OR REPLACE FUNCTION fake_benchmark(
     p_locale text, p_seed bigint, p_n bigint, p_with_bio boolean DEFAULT false
 ) RETURNS TABLE (users bigint, elapsed_seconds double precision, users_per_second double precision)

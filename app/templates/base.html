@@ -1,3 +1,4 @@
+{% import "macros.html" as ui -%}
 <!doctype html>
 <html lang="en" class="no-js">
 <head>
@@ -18,9 +19,7 @@
   <header class="site-header">
     <div class="wrap site-header-inner">
       <a class="brand" href="{{ url_for('index') }}">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
-        </span>
+        <span class="brand-mark">{{ ui.icon("person", stroke_width=2.25) }}</span>
         {% block brand %}<span>Fake User Generator</span>{% endblock %}
       </a>
       <nav class="site-nav" aria-label="Project links">

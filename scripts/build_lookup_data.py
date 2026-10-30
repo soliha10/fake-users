@@ -1,10 +1,3 @@
-"""Build data/*.csv from the public sources listed in data/SOURCES.md.
-
-This is a development-time export, not part of generation. The CSV output is
-committed, so a deployment only needs scripts/load_lookup.py.
-
-Usage: python scripts/build_lookup_data.py [--raw-dir .raw]
-"""
 import argparse
 import collections
 import csv
@@ -14,8 +7,8 @@ import re
 import urllib.request
 import zipfile
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-DATA = ROOT / "data"
+ROOT_DIR = pathlib.Path(__file__).resolve().parent.parent
+DATA_DIR = ROOT_DIR / "data"
 
 SOURCES = {
     "US.zip": "https://download.geonames.org/export/zip/US.zip",
@@ -51,7 +44,6 @@ Münchner Kölner Frankfurter Stuttgarter Dresdner Leipziger Bremer Hannoversche
 DE_STREET_TYPES = [("straße", 50), ("weg", 20), ("gasse", 6), ("allee", 6), ("ring", 4),
                    ("platz", 4), ("damm", 3), ("pfad", 2), ("steig", 1), ("ufer", 1)]
 
-# Weighted (value, weight) lists kept by hand because no source provides them.
 TITLES = {
     "en_US": {"title": {"M": [("Mr.", 70), ("Dr.", 15), ("Prof.", 5), ("Rev.", 3)],
                         "F": [("Ms.", 40), ("Mrs.", 35), ("Miss", 10), ("Dr.", 12), ("Prof.", 4)]},
@@ -87,7 +79,6 @@ TEMPLATES = {
                     ("{street}{street_type} {number}, D-{zip} {city}", 10),
                     ("{street}{street_type} {number}, {zip} {city}, {region}", 10),
                     ("{zip} {city}, {street}{street_type} {number}", 5)],
-        # Number blocks the Bundesnetzagentur keeps free for fictional use.
         "phone": [("030 23125###", 20), ("+49 30 23125###", 15), ("(030) 23125-###", 10), ("040 66969###", 10),
                   ("+49 40 66969###", 10), ("069 90009###", 10), ("+49 69 90009###", 5), ("0171 3920###", 10),
                   ("+49 171 3920###", 10)],
@@ -95,7 +86,6 @@ TEMPLATES = {
                   ("{last}.{first}@{domain}", 10), ("{first}-{last}@{domain}", 5), ("{first}.{l}{n4}@{domain}", 10)],
     },
 }
-# example.com/.net/.org and the .example TLD are reserved by RFC 2606/6761.
 EMAIL_DOMAINS = {
     "en_US": [("example.com", 40), ("example.org", 20), ("example.net", 20), ("mail.example", 10), ("inbox.example", 10)],
     "de_DE": [("example.com", 20), ("example.org", 15), ("example.net", 15), ("beispiel.example", 25),
@@ -105,7 +95,6 @@ EYE_COLORS = {
     "en_US": [("brown", 45), ("blue", 27), ("hazel", 9), ("green", 9), ("gray", 3), ("amber", 5), ("other", 2)],
     "de_DE": [("braun", 35), ("blau", 37), ("grün", 12), ("grau", 8), ("haselnussbraun", 6), ("bernsteinfarben", 2)],
 }
-# (attribute, gender, mean, stddev, min, max): approximate adult averages.
 PHYSICAL = {
     "en_US": [("height_cm", "M", 175.4, 7.6, 140, 215), ("height_cm", "F", 161.7, 7.1, 130, 200),
               ("weight_kg", "M", 90.6, 14.0, 45, 170), ("weight_kg", "F", 77.5, 13.0, 40, 160)],
@@ -118,7 +107,6 @@ LOCALES = [("en_US", "English (USA)", "United States", 9999),
 COMPANY_RE = re.compile(r"\d|GmbH|mbH|\bAG\b|\bKG\b|\bSE\b|\be\.\s?V\.|&|Postfach|Bank|Sparkasse|Versicherung"
                         r"|Vertrieb|Verwaltung|Gesellschaft|Finanz|Großkunde|Allianz|Universität|Klinik", re.I)
 
-# GeoNames mixes company and agency postcodes into DE, so multi-word names must look like a place.
 DE_PLACE_RE = re.compile(r"[^\W\d_]+(-[^\W\d_]+)*"
                          r"|(Bad|Groß|Klein|Neu|Alt|Sankt|St\.|Hohen|Nieder|Ober|Unter) [^\W\d_]+(-[^\W\d_]+)*"
                          r"|[^\W\d_]+(-[^\W\d_]+)* (am|an der|im|in der|ob der|bei|vor der) [^\W\d_]+( [^\W\d_]+)?")
@@ -127,156 +115,202 @@ DE_REGIONS = {"Bavaria": "Bayern", "Lower Saxony": "Niedersachsen", "Land Berlin
               "Mecklenburg-Western Pomerania": "Mecklenburg-Vorpommern"}
 
 
-def fetch(raw: pathlib.Path) -> None:
-    raw.mkdir(exist_ok=True)
-    for name, url in SOURCES.items():
-        if not (raw / name).exists():
+MIN_SENTENCE_WORDS = 6
+MAX_SENTENCE_WORDS = 24
+MAX_FIRST_NAMES = 1500
+MAX_MIDDLE_NAMES = 400
+GERMAN_STREET_SURNAME_MIN_WEIGHT = 2
+GERMAN_SURNAME_SOURCE_WEIGHTS = (("de_LU", 1), ("de_LI", 1), ("de_CH", 1), ("de_AT", 2), ("de_DE", 4))
+US_EXCLUDED_REGIONS = {"AA", "AE", "AP", "AS", "FM", "GU", "MH", "MP", "PR", "PW", "VI"}
+SENTENCE_START = "^"
+SENTENCE_END = "$"
+
+
+def download_sources(raw_dir):
+    raw_dir.mkdir(exist_ok=True)
+    for file_name, url in SOURCES.items():
+        if not (raw_dir / file_name).exists():
             print("download", url)
-            urllib.request.urlretrieve(url, raw / name)
+            urllib.request.urlretrieve(url, raw_dir / file_name)
 
 
-def write(name, header, rows):
-    with open(DATA / name, "w", newline="", encoding="utf-8") as fh:
-        out = csv.writer(fh, lineterminator="\n")
-        out.writerow(header)
-        out.writerows(rows)
-    print(f"{name}: {len(rows)} rows")
+def write_csv(file_name, header, rows):
+    with open(DATA_DIR / file_name, "w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.writer(csv_file, lineterminator="\n")
+        writer.writerow(header)
+        writer.writerows(rows)
+    print(f"{file_name}: {len(rows)} rows")
 
 
-def provider(module):
+def faker_provider(module):
     return importlib.import_module(module).Provider
 
 
-def en_first_names(raw):
-    totals = {"boy": collections.Counter(), "girl": collections.Counter()}
-    with open(raw / "baby-names.csv", encoding="utf-8") as fh:
-        for row in csv.DictReader(fh):
-            totals[row["sex"]][row["name"]] += float(row["percent"])
-    return {"M": totals["boy"].most_common(1500), "F": totals["girl"].most_common(1500)}
+def by_weight_then_value(weighted_value):
+    value, weight = weighted_value
+    return -weight, value
 
 
-def de_first_names():
-    p = provider("faker.providers.person.de_DE")
-    return {"M": [(n, 1) for n in sorted(set(p.first_names_male))],
-            "F": [(n, 1) for n in sorted(set(p.first_names_female))]}
+def indexed_rows(weighted_values_by_locale):
+    return [(locale, idx, value, weight) for locale, weighted_values in weighted_values_by_locale.items()
+            for idx, (value, weight) in enumerate(weighted_values)]
 
 
-def en_last_names():
-    p = provider("faker.providers.person.en_US")
-    return sorted(p.last_names.items(), key=lambda kv: (-kv[1], kv[0]))
+def nested_indexed_rows(weighted_values_by_locale_and_kind):
+    return [(locale, kind, idx, value, weight)
+            for locale, weighted_values_by_kind in weighted_values_by_locale_and_kind.items()
+            for kind, weighted_values in weighted_values_by_kind.items()
+            for idx, (value, weight) in enumerate(weighted_values)]
 
 
-def de_last_names():
+def title_rows():
+    return [(locale, kind, gender, idx, value, weight)
+            for locale, titles_by_kind in TITLES.items()
+            for kind, titles_by_gender in titles_by_kind.items()
+            for gender, weighted_titles in titles_by_gender.items()
+            for idx, (value, weight) in enumerate(weighted_titles)]
+
+
+def english_first_names(raw_dir):
+    popularity = {"boy": collections.Counter(), "girl": collections.Counter()}
+    with open(raw_dir / "baby-names.csv", encoding="utf-8") as csv_file:
+        for baby_name in csv.DictReader(csv_file):
+            popularity[baby_name["sex"]][baby_name["name"]] += float(baby_name["percent"])
+    return {"M": popularity["boy"].most_common(MAX_FIRST_NAMES),
+            "F": popularity["girl"].most_common(MAX_FIRST_NAMES)}
+
+
+def german_first_names():
+    provider = faker_provider("faker.providers.person.de_DE")
+    return {"M": [(name, 1) for name in sorted(set(provider.first_names_male))],
+            "F": [(name, 1) for name in sorted(set(provider.first_names_female))]}
+
+
+def english_last_names():
+    return sorted(faker_provider("faker.providers.person.en_US").last_names.items(), key=by_weight_then_value)
+
+
+def german_last_names():
     weights = {}
-    for module, weight in (("de_LU", 1), ("de_LI", 1), ("de_CH", 1), ("de_AT", 2), ("de_DE", 4)):
-        for name in provider(f"faker.providers.person.{module}").last_names:
+    for module, weight in GERMAN_SURNAME_SOURCE_WEIGHTS:
+        for name in faker_provider(f"faker.providers.person.{module}").last_names:
             if re.fullmatch(r"[^\W\d_]+(-[^\W\d_]+)?", name):
                 weights[name] = weight
-    return sorted(weights.items(), key=lambda kv: (-kv[1], kv[0]))
+    return sorted(weights.items(), key=by_weight_then_value)
 
 
-def names_rows(locale, firsts, lasts):
+def name_rows(locale, first_names, last_names):
     rows = []
     for gender in "MF":
-        for idx, (value, weight) in enumerate(firsts[gender]):
-            rows.append((locale, "first", gender, idx, value, round(weight, 6)))
-        # Middle names are the most common first names for the same gender.
-        for idx, (value, weight) in enumerate(firsts[gender][:400]):
-            rows.append((locale, "middle", gender, idx, value, round(weight, 6)))
-    for idx, (value, weight) in enumerate(lasts):
-        rows.append((locale, "last", "A", idx, value, round(weight, 6)))
+        for idx, (name, weight) in enumerate(first_names[gender]):
+            rows.append((locale, "first", gender, idx, name, round(weight, 6)))
+        for idx, (name, weight) in enumerate(first_names[gender][:MAX_MIDDLE_NAMES]):
+            rows.append((locale, "middle", gender, idx, name, round(weight, 6)))
+    for idx, (name, weight) in enumerate(last_names):
+        rows.append((locale, "last", "A", idx, name, round(weight, 6)))
     return rows
 
 
-def street_rows(locale, stems, lasts, types):
-    plain = [v for v, _ in lasts if "-" not in v and " " not in v]
-    values = list(dict.fromkeys(stems + plain))
-    rows = [(locale, "street", i, v, 3 if v in stems else 1) for i, v in enumerate(values)]
-    rows += [(locale, "street_type", i, v, w) for i, (v, w) in enumerate(types)]
+def street_rows(locale, stems, last_names, street_types):
+    surname_stems = [name for name, _ in last_names if "-" not in name and " " not in name]
+    street_names = list(dict.fromkeys(stems + surname_stems))
+    rows = [(locale, "street", idx, name, 3 if name in stems else 1) for idx, name in enumerate(street_names)]
+    rows += [(locale, "street_type", idx, value, weight) for idx, (value, weight) in enumerate(street_types)]
     return rows
 
 
-def place_rows(raw, code, locale):
-    seen = {}
-    with zipfile.ZipFile(raw / f"{code}.zip") as z, z.open(f"{code}.txt") as fh:
-        for line in fh.read().decode("utf-8").splitlines():
-            parts = line.split("\t")
-            postal, city, state, state_code = parts[1], parts[2], parts[3], parts[4]
-            if not city or not state or COMPANY_RE.search(city):
-                continue
-            if code == "DE" and not DE_PLACE_RE.fullmatch(city):
-                continue
-            region = state_code if code == "US" else DE_REGIONS.get(state, state)
-            if code == "US" and state_code in {"AA", "AE", "AP", "AS", "FM", "GU", "MH", "MP", "PR", "PW", "VI"}:
-                continue
-            seen[(city, region, postal)] = True
-    return [(locale, i, *key, 1) for i, key in enumerate(sorted(seen))]
+def is_excluded_place(country, city, state, state_code):
+    if not city or not state or COMPANY_RE.search(city):
+        return True
+    if country == "DE":
+        return not DE_PLACE_RE.fullmatch(city)
+    return state_code in US_EXCLUDED_REGIONS
 
 
-def clean_book(path):
-    text = path.read_text(encoding="utf-8", errors="ignore")
+def place_rows(raw_dir, country, locale):
+    places = {}
+    with zipfile.ZipFile(raw_dir / f"{country}.zip") as archive, archive.open(f"{country}.txt") as text_file:
+        for line in text_file.read().decode("utf-8").splitlines():
+            _, postal_code, city, state, state_code, *_ = line.split("\t")
+            if not is_excluded_place(country, city, state, state_code):
+                region = state_code if country == "US" else DE_REGIONS.get(state, state)
+                places[(city, region, postal_code)] = True
+    return [(locale, idx, *place, 1) for idx, place in enumerate(sorted(places))]
+
+
+def clean_book(book_path):
+    text = book_path.read_text(encoding="utf-8", errors="ignore")
     start = re.search(r"\*\*\* ?START OF.*?\*\*\*", text)
     end = re.search(r"\*\*\* ?END OF.*?\*\*\*", text)
-    text = text[start.end(): end.start()]
-    return re.sub(r"\s+", " ", re.sub(r"[_*\[\]{}|=#]", " ", text))
+    return re.sub(r"\s+", " ", re.sub(r"[_*\[\]{}|=#]", " ", text[start.end(): end.start()]))
 
 
-def sentences(text):
-    for sentence in re.split(r"(?<=[.!?])\s+(?=[A-ZÄÖÜ])", text):
-        sentence = sentence.strip()
+def is_usable_sentence(sentence, word_count):
+    if not MIN_SENTENCE_WORDS <= word_count <= MAX_SENTENCE_WORDS:
+        return False
+    if not sentence[0].isupper() or sentence[-1] not in ".!?":
+        return False
+    return not re.search(r"[\"“”„«»‘’()\d:;]|--|—|^[A-ZÄÖÜ ]+[.!?]$|CHAPTER|Kapitel", sentence)
+
+
+def split_sentences(text):
+    for raw_sentence in re.split(r"(?<=[.!?])\s+(?=[A-ZÄÖÜ])", text):
+        sentence = raw_sentence.strip()
         words = sentence.split()
-        if not 6 <= len(words) <= 24 or not sentence[0].isupper() or sentence[-1] not in ".!?":
-            continue
-        if re.search(r"[\"“”„«»‘’()\d:;]|--|—|^[A-ZÄÖÜ ]+[.!?]$|CHAPTER|Kapitel", sentence):
-            continue
-        yield words
+        if is_usable_sentence(sentence, len(words)):
+            yield words
 
 
-def markov_rows(raw):
+def count_transitions(raw_dir, books):
+    transitions = collections.defaultdict(collections.Counter)
+    for book in books:
+        for words in split_sentences(clean_book(raw_dir / book)):
+            chain = [SENTENCE_START, SENTENCE_START, *words, SENTENCE_END]
+            for previous_word, current_word, next_word in zip(chain, chain[1:], chain[2:]):
+                transitions[f"{previous_word} {current_word}"][next_word] += 1
+    return transitions
+
+
+def markov_rows(raw_dir):
     rows = []
     for locale, books in CORPORA.items():
-        counts = collections.defaultdict(collections.Counter)
-        for book in books:
-            for words in sentences(clean_book(raw / book)):
-                chain = ["^", "^", *words, "$"]
-                for a, b, c in zip(chain, chain[1:], chain[2:]):
-                    counts[f"{a} {b}"][c] += 1
-        for prefix in sorted(counts):
-            ordered = sorted(counts[prefix].items(), key=lambda kv: (-kv[1], kv[0]))
-            rows += [(locale, prefix, i, w, n) for i, (w, n) in enumerate(ordered)]
-        print(locale, "markov prefixes:", len(counts))
+        transitions = count_transitions(raw_dir, books)
+        for prefix in sorted(transitions):
+            next_words = sorted(transitions[prefix].items(), key=by_weight_then_value)
+            rows += [(locale, prefix, idx, word, count) for idx, (word, count) in enumerate(next_words)]
+        print(locale, "markov prefixes:", len(transitions))
     return rows
+
+
+def parse_raw_dir():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--raw-dir", default=str(ROOT_DIR / ".raw"))
+    return pathlib.Path(parser.parse_args().raw_dir)
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--raw-dir", default=str(ROOT / ".raw"))
-    raw = pathlib.Path(parser.parse_args().raw_dir)
-    fetch(raw)
-    DATA.mkdir(exist_ok=True)
+    raw_dir = parse_raw_dir()
+    download_sources(raw_dir)
+    DATA_DIR.mkdir(exist_ok=True)
 
-    en_last, de_last = en_last_names(), de_last_names()
-    write("locales.csv", ["code", "name", "country", "house_number_max"], LOCALES)
-    write("names.csv", ["locale", "kind", "gender", "idx", "value", "weight"],
-          names_rows("en_US", en_first_names(raw), en_last) + names_rows("de_DE", de_first_names(), de_last))
-    write("address_parts.csv", ["locale", "kind", "idx", "value", "weight"],
-          street_rows("en_US", EN_STREET_STEMS, en_last, EN_STREET_TYPES)
-          + street_rows("de_DE", DE_STREET_STEMS, [kv for kv in de_last if kv[1] >= 2], DE_STREET_TYPES))
-    write("places.csv", ["locale", "idx", "city", "region", "postal_code", "weight"],
-          place_rows(raw, "US", "en_US") + place_rows(raw, "DE", "de_DE"))
-    write("titles.csv", ["locale", "kind", "gender", "idx", "value", "weight"],
-          [(loc, kind, g, i, v, w) for loc, kinds in TITLES.items() for kind, genders in kinds.items()
-           for g, items in genders.items() for i, (v, w) in enumerate(items)])
-    write("format_templates.csv", ["locale", "kind", "idx", "template", "weight"],
-          [(loc, kind, i, t, w) for loc, kinds in TEMPLATES.items() for kind, items in kinds.items()
-           for i, (t, w) in enumerate(items)])
-    write("email_domains.csv", ["locale", "idx", "value", "weight"],
-          [(loc, i, v, w) for loc, items in EMAIL_DOMAINS.items() for i, (v, w) in enumerate(items)])
-    write("eye_colors.csv", ["locale", "idx", "value", "weight"],
-          [(loc, i, v, w) for loc, items in EYE_COLORS.items() for i, (v, w) in enumerate(items)])
-    write("physical_distributions.csv", ["locale", "attribute", "gender", "mean", "stddev", "min_value", "max_value"],
-          [(loc, *row) for loc, items in PHYSICAL.items() for row in items])
-    write("markov_transitions.csv", ["locale", "prefix", "idx", "next_word", "weight"], markov_rows(raw))
+    en_last_names, de_last_names = english_last_names(), german_last_names()
+    de_street_surnames = [surname for surname in de_last_names if surname[1] >= GERMAN_STREET_SURNAME_MIN_WEIGHT]
+    write_csv("locales.csv", ["code", "name", "country", "house_number_max"], LOCALES)
+    write_csv("names.csv", ["locale", "kind", "gender", "idx", "value", "weight"],
+              name_rows("en_US", english_first_names(raw_dir), en_last_names)
+              + name_rows("de_DE", german_first_names(), de_last_names))
+    write_csv("address_parts.csv", ["locale", "kind", "idx", "value", "weight"],
+              street_rows("en_US", EN_STREET_STEMS, en_last_names, EN_STREET_TYPES)
+              + street_rows("de_DE", DE_STREET_STEMS, de_street_surnames, DE_STREET_TYPES))
+    write_csv("places.csv", ["locale", "idx", "city", "region", "postal_code", "weight"],
+              place_rows(raw_dir, "US", "en_US") + place_rows(raw_dir, "DE", "de_DE"))
+    write_csv("titles.csv", ["locale", "kind", "gender", "idx", "value", "weight"], title_rows())
+    write_csv("format_templates.csv", ["locale", "kind", "idx", "template", "weight"], nested_indexed_rows(TEMPLATES))
+    write_csv("email_domains.csv", ["locale", "idx", "value", "weight"], indexed_rows(EMAIL_DOMAINS))
+    write_csv("eye_colors.csv", ["locale", "idx", "value", "weight"], indexed_rows(EYE_COLORS))
+    write_csv("physical_distributions.csv", ["locale", "attribute", "gender", "mean", "stddev", "min_value", "max_value"],
+              [(locale, *distribution) for locale, distributions in PHYSICAL.items() for distribution in distributions])
+    write_csv("markov_transitions.csv", ["locale", "prefix", "idx", "next_word", "weight"], markov_rows(raw_dir))
 
 
 if __name__ == "__main__":

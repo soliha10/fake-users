@@ -1,7 +1,3 @@
--- Layer 3: weighted lookups. The generic pickers take a uniform; the named ones
--- bind it to a field key for one (locale, seed, position). All are STABLE because
--- they read tables.
-
 CREATE OR REPLACE FUNCTION fake_pick_name(p_locale text, p_kind text, p_gender char, p_u double precision)
 RETURNS text
 LANGUAGE plpgsql STABLE PARALLEL SAFE AS $$
@@ -159,8 +155,6 @@ BEGIN
 END;
 $$;
 
--- Normal value for an attribute, clamped to the configured range and rounded to
--- one decimal.
 CREATE OR REPLACE FUNCTION fake_physical(
     p_locale text, p_seed bigint, p_position bigint, p_gender char, p_attribute text
 ) RETURNS numeric

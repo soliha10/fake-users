@@ -1,7 +1,3 @@
--- Lookup schema. Every table is shared between locales and keyed by a stable
--- integer idx, so a new locale needs only new rows. cum_weight is the running
--- share of weight in idx order, in (0, 1]; fake_rebuild_weights() maintains it.
-
 CREATE TABLE locales (
     code             text PRIMARY KEY,
     name             text NOT NULL,
@@ -19,6 +15,7 @@ CREATE TABLE names (
     cum_weight double precision,
     PRIMARY KEY (locale, kind, gender, idx)
 );
+
 CREATE INDEX names_pick_idx ON names (locale, kind, gender, cum_weight);
 
 CREATE TABLE titles (
@@ -31,6 +28,7 @@ CREATE TABLE titles (
     cum_weight double precision,
     PRIMARY KEY (locale, kind, gender, idx)
 );
+
 CREATE INDEX titles_pick_idx ON titles (locale, kind, gender, cum_weight);
 
 CREATE TABLE address_parts (
@@ -42,9 +40,9 @@ CREATE TABLE address_parts (
     cum_weight double precision,
     PRIMARY KEY (locale, kind, idx)
 );
+
 CREATE INDEX address_parts_pick_idx ON address_parts (locale, kind, cum_weight);
 
--- City, region and postal code live in one row so an address stays consistent.
 CREATE TABLE places (
     locale      text NOT NULL REFERENCES locales (code),
     idx         integer NOT NULL,
@@ -55,6 +53,7 @@ CREATE TABLE places (
     cum_weight  double precision,
     PRIMARY KEY (locale, idx)
 );
+
 CREATE INDEX places_pick_idx ON places (locale, cum_weight);
 
 CREATE TABLE format_templates (
@@ -66,6 +65,7 @@ CREATE TABLE format_templates (
     cum_weight double precision,
     PRIMARY KEY (locale, kind, idx)
 );
+
 CREATE INDEX format_templates_pick_idx ON format_templates (locale, kind, cum_weight);
 
 CREATE TABLE email_domains (
@@ -76,6 +76,7 @@ CREATE TABLE email_domains (
     cum_weight double precision,
     PRIMARY KEY (locale, idx)
 );
+
 CREATE INDEX email_domains_pick_idx ON email_domains (locale, cum_weight);
 
 CREATE TABLE eye_colors (
@@ -98,7 +99,6 @@ CREATE TABLE physical_distributions (
     PRIMARY KEY (locale, attribute, gender)
 );
 
--- Word-level order-2 chain. '^ ^' is the sentence start and '$' the sentence end.
 CREATE TABLE markov_transitions (
     locale     text NOT NULL REFERENCES locales (code),
     prefix     text NOT NULL,
@@ -108,6 +108,7 @@ CREATE TABLE markov_transitions (
     cum_weight double precision,
     PRIMARY KEY (locale, prefix, idx)
 );
+
 CREATE INDEX markov_transitions_pick_idx ON markov_transitions (locale, prefix, cum_weight);
 
 CREATE TYPE fake_place AS (city text, region text, postal_code text);
@@ -128,8 +129,6 @@ CREATE TYPE fake_user_row AS (
     bio        text
 );
 
--- Recomputes cum_weight for one locale, or for all of them when p_locale is NULL.
--- Run it after every change to lookup rows.
 CREATE PROCEDURE fake_rebuild_weights(p_locale text DEFAULT NULL)
 LANGUAGE plpgsql AS $$
 DECLARE
