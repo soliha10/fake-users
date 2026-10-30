@@ -1,0 +1,31 @@
+locale,kind,gender,idx,value,weight
+en_US,title,M,0,Mr.,70
+en_US,title,M,1,Dr.,15
+en_US,title,M,2,Prof.,5
+en_US,title,M,3,Rev.,3
+en_US,title,F,0,Ms.,40
+en_US,title,F,1,Mrs.,35
+en_US,title,F,2,Miss,10
+en_US,title,F,3,Dr.,12
+en_US,title,F,4,Prof.,4
+en_US,suffix,M,0,Jr.,50
+en_US,suffix,M,1,Sr.,25
+en_US,suffix,M,2,III,10
+en_US,suffix,M,3,PhD,8
+en_US,suffix,M,4,MD,7
+en_US,suffix,F,0,PhD,60
+en_US,suffix,F,1,MD,40
+de_DE,title,M,0,Herr,75
+de_DE,title,M,1,Dr.,15
+de_DE,title,M,2,Prof.,4
+de_DE,title,M,3,Prof. Dr.,4
+de_DE,title,M,4,Dipl.-Ing.,3
+de_DE,title,F,0,Frau,75
+de_DE,title,F,1,Dr.,15
+de_DE,title,F,2,Prof.,4
+de_DE,title,F,3,Prof. Dr.,4
+de_DE,title,F,4,Dipl.-Ing.,3
+de_DE,suffix,M,0,M.A.,50
+de_DE,suffix,M,1,MBA,50
+de_DE,suffix,F,0,M.A.,50
+de_DE,suffix,F,1,MBA,50

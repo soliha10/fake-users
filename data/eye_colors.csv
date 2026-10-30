@@ -1,0 +1,14 @@
+locale,idx,value,weight
+en_US,0,brown,45
+en_US,1,blue,27
+en_US,2,hazel,9
+en_US,3,green,9
+en_US,4,gray,3
+en_US,5,amber,5
+en_US,6,other,2
+de_DE,0,braun,35
+de_DE,1,blau,37
+de_DE,2,grün,12
+de_DE,3,grau,8
+de_DE,4,haselnussbraun,6
+de_DE,5,bernsteinfarben,2

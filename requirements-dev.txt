@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest>=8,<10
+# Only scripts/build_lookup_data.py uses Faker, to export its word lists to data/*.csv.
+faker>=40,<41

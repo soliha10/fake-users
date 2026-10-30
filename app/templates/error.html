@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · Fake Users{% endblock %}
+{% block content %}
+<div class="alert alert-danger" role="alert">
+  <h1 class="h4">{{ title }}</h1>
+  <p class="mb-2">{{ message }}</p>
+  <a class="alert-link" href="{{ url_for('index') }}">Back to the generator</a>
+</div>
+{% endblock %}

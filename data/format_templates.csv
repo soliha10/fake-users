@@ -1,0 +1,52 @@
+locale,kind,idx,template,weight
+en_US,full_name,0,{first} {last},45
+en_US,full_name,1,{first} {middle} {last},15
+en_US,full_name,2,{first} {m}. {last},15
+en_US,full_name,3,{title} {first} {last},12
+en_US,full_name,4,{title} {first} {m}. {last},5
+en_US,full_name,5,{first} {last} {suffix},5
+en_US,full_name,6,"{last}, {first}",3
+en_US,address,0,"{number} {street} {street_type}, {city}, {region} {zip}",50
+en_US,address,1,"{number} {street} {street_type}, Apt {apt}, {city}, {region} {zip}",20
+en_US,address,2,"{number} {street} {street_type}, Suite {apt}, {city}, {region} {zip}",10
+en_US,address,3,"{number} {street} {street_type}, Unit {apt}, {city}, {region} {zip}-{zip4}",10
+en_US,address,4,"{number} {street} {street_type}, {city}, {region}, USA",10
+en_US,phone,0,(%##) 555-01##,40
+en_US,phone,1,%##-555-01##,25
+en_US,phone,2,%##.555.01##,15
+en_US,phone,3,+1 %##-555-01##,15
+en_US,phone,4,1-%##-555-01##,5
+en_US,email,0,{first}.{last}@{domain},35
+en_US,email,1,{f}{last}@{domain},20
+en_US,email,2,{first}{last}{n2}@{domain},15
+en_US,email,3,{first}_{last}@{domain},10
+en_US,email,4,{last}.{first}{n2}@{domain},10
+en_US,email,5,{first}.{l}{n4}@{domain},10
+de_DE,full_name,0,{first} {last},50
+de_DE,full_name,1,{first} {middle} {last},15
+de_DE,full_name,2,{first} {m}. {last},8
+de_DE,full_name,3,{title} {first} {last},17
+de_DE,full_name,4,{title} {last},5
+de_DE,full_name,5,"{first} {last}, {suffix}",2
+de_DE,full_name,6,"{last}, {first}",3
+de_DE,address,0,"{street}{street_type} {number}, {zip} {city}",50
+de_DE,address,1,"{street}{street_type} {number}{letter}, {zip} {city}",15
+de_DE,address,2,"{street}{street_type} {number}, Wohnung {apt}, {zip} {city}",10
+de_DE,address,3,"{street}{street_type} {number}, D-{zip} {city}",10
+de_DE,address,4,"{street}{street_type} {number}, {zip} {city}, {region}",10
+de_DE,address,5,"{zip} {city}, {street}{street_type} {number}",5
+de_DE,phone,0,030 23125###,20
+de_DE,phone,1,+49 30 23125###,15
+de_DE,phone,2,(030) 23125-###,10
+de_DE,phone,3,040 66969###,10
+de_DE,phone,4,+49 40 66969###,10
+de_DE,phone,5,069 90009###,10
+de_DE,phone,6,+49 69 90009###,5
+de_DE,phone,7,0171 3920###,10
+de_DE,phone,8,+49 171 3920###,10
+de_DE,email,0,{first}.{last}@{domain},40
+de_DE,email,1,{f}.{last}@{domain},20
+de_DE,email,2,{first}{last}{n2}@{domain},15
+de_DE,email,3,{last}.{first}@{domain},10
+de_DE,email,4,{first}-{last}@{domain},5
+de_DE,email,5,{first}.{l}{n4}@{domain},10

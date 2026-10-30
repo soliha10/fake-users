@@ -1,0 +1,9 @@
+locale,attribute,gender,mean,stddev,min_value,max_value
+en_US,height_cm,M,175.4,7.6,140,215
+en_US,height_cm,F,161.7,7.1,130,200
+en_US,weight_kg,M,90.6,14.0,45,170
+en_US,weight_kg,F,77.5,13.0,40,160
+de_DE,height_cm,M,178.9,7.3,140,215
+de_DE,height_cm,F,165.8,6.8,130,200
+de_DE,weight_kg,M,85.8,13.0,45,170
+de_DE,weight_kg,F,69.2,12.0,40,160

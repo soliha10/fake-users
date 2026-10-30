@@ -1,0 +1,12 @@
+locale,idx,value,weight
+en_US,0,example.com,40
+en_US,1,example.org,20
+en_US,2,example.net,20
+en_US,3,mail.example,10
+en_US,4,inbox.example,10
+de_DE,0,example.com,20
+de_DE,1,example.org,15
+de_DE,2,example.net,15
+de_DE,3,beispiel.example,25
+de_DE,4,post.example,15
+de_DE,5,postfach.example,10

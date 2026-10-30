@@ -1,0 +1,119 @@
+{
+  "label": "local",
+  "host": "Apple M3, PostgreSQL in Docker",
+  "postgres": "16.15",
+  "date": "2026-10-30",
+  "seed": 2024,
+  "results": [
+    {
+      "locale": "de_DE",
+      "users": 1000,
+      "with_bio": false,
+      "runs_users_per_second": [
+        4153.755410266422,
+        3934.4365493417686,
+        4874.363286295727
+      ],
+      "median": 4153.755410266422
+    },
+    {
+      "locale": "de_DE",
+      "users": 10000,
+      "with_bio": false,
+      "runs_users_per_second": [
+        4734.574991406746,
+        4553.605499298289,
+        4756.722199812775
+      ],
+      "median": 4734.574991406746
+    },
+    {
+      "locale": "de_DE",
+      "users": 100000,
+      "with_bio": false,
+      "runs_users_per_second": [
+        4708.818661462731,
+        4538.231125485404,
+        4032.8451036622673
+      ],
+      "median": 4538.231125485404
+    },
+    {
+      "locale": "de_DE",
+      "users": 1000,
+      "with_bio": true,
+      "runs_users_per_second": [
+        988.2907314142044,
+        1266.093632688512,
+        1039.5820880006238
+      ],
+      "median": 1039.5820880006238
+    },
+    {
+      "locale": "de_DE",
+      "users": 10000,
+      "with_bio": true,
+      "runs_users_per_second": [
+        856.2588799397467,
+        1000.2531640758275,
+        943.6294631314533
+      ],
+      "median": 943.6294631314533
+    },
+    {
+      "locale": "en_US",
+      "users": 1000,
+      "with_bio": false,
+      "runs_users_per_second": [
+        2366.8751094679737,
+        2972.2451745599587,
+        2414.4325117824305
+      ],
+      "median": 2414.4325117824305
+    },
+    {
+      "locale": "en_US",
+      "users": 10000,
+      "with_bio": false,
+      "runs_users_per_second": [
+        2132.585847776449,
+        3858.3849263704406,
+        4154.511259140963
+      ],
+      "median": 3858.3849263704406
+    },
+    {
+      "locale": "en_US",
+      "users": 100000,
+      "with_bio": false,
+      "runs_users_per_second": [
+        4368.211008354771,
+        4698.727241655871,
+        4582.254002495771
+      ],
+      "median": 4582.254002495771
+    },
+    {
+      "locale": "en_US",
+      "users": 1000,
+      "with_bio": true,
+      "runs_users_per_second": [
+        1745.5814968361335,
+        1910.957045507531,
+        1900.2194753494027
+      ],
+      "median": 1900.2194753494027
+    },
+    {
+      "locale": "en_US",
+      "users": 10000,
+      "with_bio": true,
+      "runs_users_per_second": [
+        1864.6603418630978,
+        1897.509442955743,
+        1845.1542834979919
+      ],
+      "median": 1864.6603418630978
+    }
+  ]
+}

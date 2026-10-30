@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h3 mb-1">Fake User Generator</h1>
+<p class="text-secondary">The same locale, seed and batch always return the same users.</p>
+
+<form id="controls" class="row g-2 align-items-end mb-3" method="get" action="{{ url_for('index') }}">
+  <div class="col-12 col-sm-5 col-md-4">
+    <label class="form-label" for="locale">Locale</label>
+    <select class="form-select" id="locale" name="locale">
+      {% for item in locales %}
+      <option value="{{ item.code }}" {{ 'selected' if item.code == locale }}>{{ item.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-sm-7 col-md-4">
+    <label class="form-label" for="seed">Seed</label>
+    <div class="input-group">
+      <input class="form-control" id="seed" name="seed" type="number" step="1" value="{{ seed }}" required>
+      <button class="btn btn-outline-secondary" id="random-seed" type="button">Random seed</button>
+    </div>
+  </div>
+  <div class="col-12 col-md-auto">
+    <button class="btn btn-primary w-100" type="submit">Generate</button>
+  </div>
+</form>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+  <span class="text-secondary">Batch {{ batch }} · positions {{ batch * batch_size }}–{{ batch * batch_size + users|length - 1 }}</span>
+  <div class="btn-group">
+    <a class="btn btn-outline-primary {{ 'disabled' if batch == 0 }}"
+       href="{{ url_for('index', locale=locale, seed=seed, batch=batch - 1) }}">Previous batch</a>
+    <a class="btn btn-primary {{ 'disabled' if batch >= max_batch }}"
+       href="{{ url_for('index', locale=locale, seed=seed, batch=batch + 1) }}">Next batch</a>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table users-table align-top mb-0">
+    <thead>
+      <tr><th>#</th><th>Name</th><th>Address</th><th>Coordinates</th><th>Physical</th><th>Phone</th><th>E-mail</th></tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td data-label="#">{{ user.pos }}</td>
+        <td data-label="Name">
+          <div>
+            <strong>{{ user.full_name }}</strong>
+            <div class="small text-secondary bio">{{ user.bio }}</div>
+          </div>
+        </td>
+        <td data-label="Address">{{ user.address }}</td>
+        <td data-label="Coordinates" class="text-nowrap">{{ user.latitude }}, {{ user.longitude }}</td>
+        <td data-label="Physical" class="text-nowrap"><div>{{ user.height_cm }} cm · {{ user.weight_kg }} kg<br>{{ user.eye_color }}</div></td>
+        <td data-label="Phone" class="text-nowrap">{{ user.phone }}</td>
+        <td data-label="E-mail" class="email">{{ user.email }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const form = document.getElementById("controls");
+  document.getElementById("locale").addEventListener("change", () => form.requestSubmit());
+  document.getElementById("random-seed").addEventListener("click", () => {
+    const [value] = crypto.getRandomValues(new Uint32Array(1));
+    document.getElementById("seed").value = value;
+    form.requestSubmit();
+  });
+</script>
+{% endblock %}
