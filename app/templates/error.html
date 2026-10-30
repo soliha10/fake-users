@@ -1,9 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ title }} · Fake Users{% endblock %}
+{% block title %}{{ title }} · Fake User Generator{% endblock %}
 {% block content %}
-<div class="alert alert-danger" role="alert">
-  <h1 class="h4">{{ title }}</h1>
-  <p class="mb-2">{{ message }}</p>
-  <a class="alert-link" href="{{ url_for('index') }}">Back to the generator</a>
-</div>
+<section class="card error-card">
+  <span class="error-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+  </span>
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  <a class="btn btn-primary" href="{{ url_for('index') }}">Back to the generator</a>
+</section>
 {% endblock %}

@@ -27,6 +27,17 @@ pool = ConnectionPool(
 )
 
 
+NAME_PREFIXES = {"herr", "frau", "miss"}
+
+
+@app.template_filter("initials")
+def initials(full_name):
+    """First and last name letters for the avatar, ignoring titles and suffixes."""
+    words = [w.strip(",") for w in full_name.split() if not w.endswith(".")]
+    words = [w for w in words if w.lower() not in NAME_PREFIXES and w not in {"III", "PhD", "MD", "MBA"}]
+    return (words[0][0] + words[-1][0]).upper() if len(words) > 1 else words[0][0].upper()
+
+
 class InvalidInput(ValueError):
     pass
 
@@ -60,8 +71,10 @@ def index():
         users = conn.execute(
             "SELECT * FROM fake_users(%s, %s, %s, %s)", (locale, seed, batch, BATCH_SIZE)
         ).fetchall()
+    first_user = batch * BATCH_SIZE + 1
     return render_template("index.html", users=users, locales=locales, locale=locale,
-                           seed=seed, batch=batch, batch_size=BATCH_SIZE, max_batch=MAX_BATCH)
+                           lang=locale.split("_")[0], seed=seed, batch=batch, batch_size=BATCH_SIZE,
+                           max_batch=MAX_BATCH, first_user=first_user, last_user=first_user + len(users) - 1)
 
 
 @app.get("/health")

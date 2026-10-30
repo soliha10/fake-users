@@ -1,72 +1,124 @@
 {% extends "base.html" %}
-{% block content %}
-<h1 class="h3 mb-1">Fake User Generator</h1>
-<p class="text-secondary">The same locale, seed and batch always return the same users.</p>
 
-<form id="controls" class="row g-2 align-items-end mb-3" method="get" action="{{ url_for('index') }}">
-  <div class="col-12 col-sm-5 col-md-4">
-    <label class="form-label" for="locale">Locale</label>
-    <select class="form-select" id="locale" name="locale">
+{% macro icon(path) -%}
+<svg class="icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ path|safe }}</svg>
+{%- endmacro %}
+{% set copy_icon = '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>' %}
+{% set chevron_left = '<path d="m15 6-6 6 6 6"/>' %}
+{% set chevron_right = '<path d="m9 6 6 6-6 6"/>' %}
+{% set chevron_down = '<path d="m6 9 6 6 6-6"/>' %}
+{% set shuffle = '<path d="M3 7h3.5c2 0 3.2 1 4.5 3l2 4c1.3 2 2.5 3 4.5 3H21"/><path d="M3 17h3.5c1.3 0 2.3-.5 3.1-1.3M14.5 8.3C15.300 7.500 16.3 7 17.5 7H21"/><path d="m18 4 3 3-3 3M18 14l3 3-3 3"/>' %}
+{% set link_icon = '<path d="M10 14a4 4 0 0 0 6 .4l3-3a4 4 0 0 0-5.7-5.7l-1.3 1.3"/><path d="M14 10a4 4 0 0 0-6-.4l-3 3a4 4 0 0 0 5.7 5.7l1.3-1.3"/>' %}
+
+{% macro copy_button(value, label) -%}
+<button class="copy-btn" type="button" data-copy="{{ value }}" aria-label="Copy {{ label }}" title="Copy {{ label }}">{{ icon(copy_icon) }}</button>
+{%- endmacro %}
+
+{% block brand %}<h1 class="brand-name">Fake User Generator</h1>{% endblock %}
+
+{% block content %}
+<form id="controls" class="card controls" method="get" action="{{ url_for('index') }}">
+  <div class="field field-locale">
+    <label for="locale">Locale</label>
+    <select id="locale" name="locale">
       {% for item in locales %}
       <option value="{{ item.code }}" {{ 'selected' if item.code == locale }}>{{ item.name }}</option>
       {% endfor %}
     </select>
+    <p class="hint">Language and format of the generated data.</p>
   </div>
-  <div class="col-12 col-sm-7 col-md-4">
-    <label class="form-label" for="seed">Seed</label>
+  <div class="field field-seed">
+    <label for="seed">Seed</label>
     <div class="input-group">
-      <input class="form-control" id="seed" name="seed" type="number" step="1" value="{{ seed }}" required>
-      <button class="btn btn-outline-secondary" id="random-seed" type="button">Random seed</button>
+      <input class="mono" id="seed" name="seed" type="text" inputmode="numeric" pattern="-?[0-9]+"
+             maxlength="20" autocomplete="off" spellcheck="false" value="{{ seed }}" required
+             title="A whole number" aria-describedby="seed-hint">
+      <button class="btn btn-secondary js-only" id="random-seed" type="button">{{ icon(shuffle) }}<span>Random seed</span></button>
     </div>
+    <p class="hint" id="seed-hint">Same locale and seed always give the same users.</p>
   </div>
-  <div class="col-12 col-md-auto">
-    <button class="btn btn-primary w-100" type="submit">Generate</button>
+  <div class="field field-submit">
+    <button class="btn btn-primary" type="submit"><span class="spinner" aria-hidden="true"></span><span>Generate</span></button>
   </div>
 </form>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-  <span class="text-secondary">Batch {{ batch }} · positions {{ batch * batch_size }}–{{ batch * batch_size + users|length - 1 }}</span>
-  <div class="btn-group">
-    <a class="btn btn-outline-primary {{ 'disabled' if batch == 0 }}"
-       href="{{ url_for('index', locale=locale, seed=seed, batch=batch - 1) }}">Previous batch</a>
-    <a class="btn btn-primary {{ 'disabled' if batch >= max_batch }}"
-       href="{{ url_for('index', locale=locale, seed=seed, batch=batch + 1) }}">Next batch</a>
+<p id="wake-message" class="wake-message" hidden>Waking up the server, this can take up to a minute.</p>
+
+<section id="results" aria-labelledby="results-title">
+  <div class="toolbar">
+    <div class="status">
+      <h2 id="results-title">Showing users {{ first_user }}–{{ last_user }}</h2>
+      <p>Batch {{ batch + 1 }} · {{ batch_size }} users per batch. Next batch continues the same list.</p>
+    </div>
+    <div class="toolbar-actions">
+      <button class="btn btn-secondary js-only copy-link" id="copy-link" type="button">{{ icon(link_icon) }}<span>Copy link</span></button>
+      <nav class="pager" aria-label="Batches">
+        {% if batch > 0 %}
+        <a class="btn btn-secondary" id="prev-batch" rel="prev"
+           href="{{ url_for('index', locale=locale, seed=seed, batch=batch - 1) }}"><span class="spinner" aria-hidden="true"></span>{{ icon(chevron_left) }}<span>Previous</span></a>
+        {% else %}
+        <span class="btn btn-secondary is-disabled" aria-disabled="true">{{ icon(chevron_left) }}<span>Previous</span></span>
+        {% endif %}
+        {% if batch < max_batch %}
+        <a class="btn btn-primary" id="next-batch" rel="next"
+           href="{{ url_for('index', locale=locale, seed=seed, batch=batch + 1) }}"><span class="spinner" aria-hidden="true"></span><span>Next</span>{{ icon(chevron_right) }}</a>
+        {% else %}
+        <span class="btn btn-primary is-disabled" aria-disabled="true"><span>Next</span>{{ icon(chevron_right) }}</span>
+        {% endif %}
+      </nav>
+    </div>
   </div>
-</div>
 
-<div class="card">
-  <table class="table users-table align-top mb-0">
-    <thead>
-      <tr><th>#</th><th>Name</th><th>Address</th><th>Coordinates</th><th>Physical</th><th>Phone</th><th>E-mail</th></tr>
-    </thead>
-    <tbody>
+  {% if users %}
+  <div class="card table-card">
+    <table class="users">
+      <thead>
+        <tr>
+          <th scope="col">Person</th>
+          <th scope="col">Contact</th>
+          <th scope="col">Address</th>
+          <th scope="col">Location</th>
+          <th scope="col">Attributes</th>
+        </tr>
+      </thead>
       {% for user in users %}
-      <tr>
-        <td data-label="#">{{ user.pos }}</td>
-        <td data-label="Name">
-          <div>
-            <strong>{{ user.full_name }}</strong>
-            <div class="small text-secondary bio">{{ user.bio }}</div>
-          </div>
-        </td>
-        <td data-label="Address">{{ user.address }}</td>
-        <td data-label="Coordinates" class="text-nowrap">{{ user.latitude }}, {{ user.longitude }}</td>
-        <td data-label="Physical" class="text-nowrap"><div>{{ user.height_cm }} cm · {{ user.weight_kg }} kg<br>{{ user.eye_color }}</div></td>
-        <td data-label="Phone" class="text-nowrap">{{ user.phone }}</td>
-        <td data-label="E-mail" class="email">{{ user.email }}</td>
-      </tr>
+      <tbody class="user">
+        <tr class="user-row">
+          <td class="person">
+            <span class="avatar" aria-hidden="true">{{ user.full_name|initials }}</span>
+            <div class="person-text">
+              <strong>{{ user.full_name }}</strong>
+              <span class="muted">User {{ user.pos + 1 }}</span>
+            </div>
+            <button class="disclosure js-only" type="button" aria-expanded="false" aria-controls="detail-{{ user.pos }}"
+                    aria-label="Show details for {{ user.full_name }}" title="Details">{{ icon(chevron_down) }}</button>
+          </td>
+          <td class="contact">
+            <div class="contact-line"><span class="mono">{{ user.email.split('@')[0] }}<wbr>@{{ user.email.split('@')[1] }}</span>{{ copy_button(user.email, 'e-mail') }}</div>
+            <div class="contact-line"><span class="mono">{{ user.phone }}</span>{{ copy_button(user.phone, 'phone') }}</div>
+          </td>
+          <td class="address"><div class="address-text" title="{{ user.address }}">{{ user.address }}</div></td>
+          <td class="location mono">
+            <span>{{ user.latitude }}</span>
+            <span>{{ user.longitude }}</span>
+          </td>
+          <td class="attributes">
+            <span>{{ user.height_cm }} cm · {{ user.weight_kg }} kg</span>
+            <span class="badge">{{ user.eye_color }}</span>
+          </td>
+        </tr>
+        <tr class="detail-row" id="detail-{{ user.pos }}">
+          <td colspan="5"><p class="bio" lang="{{ lang }}">{{ user.bio }}</p></td>
+        </tr>
+      </tbody>
       {% endfor %}
-    </tbody>
-  </table>
-</div>
-
-<script>
-  const form = document.getElementById("controls");
-  document.getElementById("locale").addEventListener("change", () => form.requestSubmit());
-  document.getElementById("random-seed").addEventListener("click", () => {
-    const [value] = crypto.getRandomValues(new Uint32Array(1));
-    document.getElementById("seed").value = value;
-    form.requestSubmit();
-  });
-</script>
+    </table>
+  </div>
+  {% else %}
+  <div class="card empty-state">
+    <h3>No users to show</h3>
+    <p>This locale has no data yet. Choose another locale.</p>
+  </div>
+  {% endif %}
+</section>
 {% endblock %}

@@ -1,8 +1,11 @@
+import pathlib
 import re
 
 import pytest
 
-from app.main import app
+from app.main import app, initials
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture()
@@ -15,7 +18,7 @@ def test_index_renders_ten_users_and_locales(client):
     response = client.get("/")
     html = response.get_data(as_text=True)
     assert response.status_code == 200
-    assert html.count('data-label="Name"') == 10
+    assert html.count('<tbody class="user">') == 10
     assert "English (USA)" in html and "Deutsch (Deutschland)" in html
 
 
@@ -47,3 +50,34 @@ def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.get_json() == {"status": "ok"}
+
+
+def test_primary_color_is_purple():
+    css = (ROOT / "app" / "static" / "app.css").read_text(encoding="utf-8")
+    assert "--bs-primary: #6D28D9;" in css
+    assert "--bs-primary-rgb: 109, 40, 217;" in css
+
+
+def test_status_shows_one_based_users_and_batch(client):
+    html = client.get("/?locale=en_US&seed=1&batch=3").get_data(as_text=True)
+    assert "Showing users 31–40" in html
+    assert "Batch 4" in html
+
+
+def test_previous_is_disabled_on_first_batch(client):
+    html = client.get("/?seed=1").get_data(as_text=True)
+    assert 'id="prev-batch"' not in html
+    assert 'aria-disabled="true"' in html
+
+
+def test_bio_is_in_the_page_with_its_language(client):
+    assert 'class="bio" lang="de"' in client.get("/?locale=de_DE").get_data(as_text=True)
+    assert 'class="bio" lang="en"' in client.get("/?locale=en_US").get_data(as_text=True)
+
+
+@pytest.mark.parametrize("name, expected", [
+    ("Dr. Edeltraut Scheel", "ES"), ("Mr. John K. Doe", "JD"), ("Scheel, Edeltraut", "SE"),
+    ("Herr Hans Weber", "HW"), ("Maria Lopez PhD", "ML"), ("Frau Weber", "W"),
+])
+def test_initials(name, expected):
+    assert initials(name) == expected
