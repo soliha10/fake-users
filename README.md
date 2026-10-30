@@ -3,7 +3,8 @@
 A web app that generates reproducible fake users. All generation runs in PostgreSQL stored
 routines; Flask only validates input, calls `fake_users()`, and renders HTML.
 
-- Library documentation: [docs/index.md](docs/index.md)
+- Live app: https://fake-users-tvxj.onrender.com
+- Library documentation: https://soliha10.github.io/fake-users/
 - Benchmark: [docs/benchmark.md](docs/benchmark.md)
 - Data sources and licenses: [data/SOURCES.md](data/SOURCES.md)
 
