@@ -19,18 +19,17 @@ The same arguments return the same rows on any connection, at any time, in any c
 
 ## Quick start
 
+The examples below list the installed locales, read batches 0 and 1 (users 0-9 and 10-19), read one
+user by absolute position, and call single-field routines.
+
 ```sql
--- Which locales are installed?
 SELECT * FROM fake_locales();
 
--- Batch 0 (users 0-9), batch 1 (users 10-19), and so on
 SELECT * FROM fake_users('en_US', 42, 0);
 SELECT * FROM fake_users('en_US', 42, 1);
 
--- A single user by absolute position
 SELECT * FROM fake_user('de_DE', 42, 123456);
 
--- Just the parts you need
 SELECT fake_address('en_US', 42, 7);
 SELECT fake_phone('de_DE', 42, 7);
 SELECT fake_bio('de_DE', 42, 7);
@@ -324,7 +323,7 @@ reaches `$`. The word limit is only checked at a sentence end, so the text never
 
 ## Design notes
 
-The code carries no comments, so the reasons behind its less obvious choices live here.
+The reasons behind the less obvious choices in the code:
 
 - **`1 - u` in `fake_normal`.** `u` can be 0 but never 1, so `1 - u` is in `(0, 1]` and `ln` stays finite.
 - **`prepare_threshold=None` in the app.** Neon's pooled endpoint runs PgBouncer, which cannot track
